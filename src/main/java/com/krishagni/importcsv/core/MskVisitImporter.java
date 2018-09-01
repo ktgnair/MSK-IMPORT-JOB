@@ -22,8 +22,6 @@ import com.krishagni.catissueplus.core.importer.services.ObjectImporter;
 
 public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisitDetail> {
 	
-	private static final Log logger = LogFactory.getLog(MskVisitImporter.class);
-	
 	@Autowired
 	private DaoFactory daoFactory;
 
@@ -38,7 +36,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 	public ResponseEvent<MskVisitDetail> importObject(
 			RequestEvent<ImportObjectDetail<MskVisitDetail>> req) {
 		try {
-			ImportObjectDetail<MskVisitDetail> detail = req.getPayload();
+			ImportObjectDetail<MskVisitDetail> detail = req.getPayload();		
 			
 			importParticipants(detail.getObject());
 			importVisit(detail.getObject());
