@@ -13,5 +13,4 @@
     	<property name="objectSchemaFactory" ref="objectSchemaFactory"/>
     	<property name="objectImporterFactory" ref="objectImporterFactory"/>
     </bean>
-  	
 </beans>

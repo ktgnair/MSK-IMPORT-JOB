@@ -2,9 +2,8 @@ package com.krishagni.importcsv.core;
 
 import java.text.ParseException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 
 import com.krishagni.catissueplus.core.biospecimen.events.CollectionProtocolRegistrationDetail;
 import com.krishagni.catissueplus.core.biospecimen.events.ParticipantDetail;
@@ -20,13 +19,12 @@ import com.krishagni.catissueplus.core.common.events.ResponseEvent;
 import com.krishagni.catissueplus.core.importer.events.ImportObjectDetail;
 import com.krishagni.catissueplus.core.importer.services.ObjectImporter;
 
+@Configurable
 public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisitDetail> {
-	
-	private static final Log logger = LogFactory.getLog(MskVisitImporter.class);
 	
 	@Autowired
 	private DaoFactory daoFactory;
-
+	
 	@Autowired
 	private CollectionProtocolRegistrationService cprSvc;
 	
@@ -34,14 +32,11 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 	private VisitService visitService;
 
 	@Override
-	@PlusTransactional
 	public ResponseEvent<MskVisitDetail> importObject(
 			RequestEvent<ImportObjectDetail<MskVisitDetail>> req) {
 		try {
 			ImportObjectDetail<MskVisitDetail> detail = req.getPayload();
-			
-			importParticipants(detail.getObject());
-			importVisit(detail.getObject());
+			importRecords(detail);
 			
 			return ResponseEvent.response(detail.getObject());
 		} catch (OpenSpecimenException ose) {
@@ -49,6 +44,14 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		} catch (Exception e) {
 			return ResponseEvent.serverError(e);
 		}
+	}
+	
+	@PlusTransactional
+	private ResponseEvent<Object> importRecords(ImportObjectDetail<MskVisitDetail> detail) throws ParseException {
+		importParticipants(detail.getObject());
+		importVisit(detail.getObject());
+		
+		return null;
 	}
 
 	private ResponseEvent<CollectionProtocolRegistrationDetail> importParticipants(MskVisitDetail object) throws ParseException {
@@ -95,6 +98,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		if (daoFactory.getCprDao().getCprByCpShortTitleAndPpid(object.getCpShortTitle(), object.getPpid())!= null) {
 			return true;
 		}
+		
 		return false;
 	}
 
