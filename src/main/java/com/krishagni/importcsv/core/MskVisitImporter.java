@@ -36,8 +36,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 			RequestEvent<ImportObjectDetail<MskVisitDetail>> req) {
 		try {
 			ImportObjectDetail<MskVisitDetail> detail = req.getPayload();
-			importRecords(detail);
-			
+			importRecords(detail);	
 			return ResponseEvent.response(detail.getObject());
 		} catch (OpenSpecimenException ose) {
 			return ResponseEvent.error(ose);
