@@ -1,6 +1,7 @@
 package com.krishagni.importcsv.core;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
@@ -22,6 +23,8 @@ import com.krishagni.catissueplus.core.importer.services.ObjectImporter;
 @Configurable
 public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisitDetail> {
 	
+	private final static String DATE_FORMAT = "MM/dd/yyyy";
+
 	@Autowired
 	private DaoFactory daoFactory;
 	
@@ -30,7 +33,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 	
 	@Autowired
 	private VisitService visitService;
-
+	
 	@Override
 	public ResponseEvent<MskVisitDetail> importObject(
 			RequestEvent<ImportObjectDetail<MskVisitDetail>> req) {
@@ -58,7 +61,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		
 		cprDetail.setCpShortTitle(object.getCpShortTitle());
 		cprDetail.setParticipant(new ParticipantDetail());
-		cprDetail.setRegistrationDate(object.getVisitDate());
+		cprDetail.setRegistrationDate(new SimpleDateFormat(DATE_FORMAT).parse(object.getVisitDate()));
 		
 		// Adding participant Details
 		cprDetail.setPpid(object.getPpid());
@@ -85,9 +88,9 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		// Setting Visit
 		visitDetail.setCpShortTitle(object.getCpShortTitle());
 		visitDetail.setPpid(object.getPpid());
-		visitDetail.setEventLabel(object.getVisit() + object.getDay());
+		visitDetail.setEventLabel(object.getVisit() + "#" + object.getDay());
 		visitDetail.setComments(object.getVisitComments());
-		visitDetail.setVisitDate(object.getVisitDate());
+		visitDetail.setVisitDate(new SimpleDateFormat(DATE_FORMAT).parse(object.getVisitDate()));
 		
 		ResponseEvent<VisitDetail> visitResponse = visitService.addVisit(request(visitDetail));
 		return(visitResponse);

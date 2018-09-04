@@ -1,7 +1,5 @@
 package com.krishagni.importcsv.core;
 
-import java.util.Date;
-
 public class MskVisitDetail {
 	
 	private String firstName;
@@ -14,7 +12,7 @@ public class MskVisitDetail {
 	
 	private String cpShortTitle;
 	
-	private Date visitDate;
+	private String visitDate;
 	
 	private String siteName;
 
@@ -64,11 +62,11 @@ public class MskVisitDetail {
 		this.cpShortTitle = cpShortTitle;
 	}
 
-	public Date getVisitDate() {
+	public String getVisitDate() {
 		return visitDate;
 	}
 
-	public void setVisitDate(Date visitDate) {
+	public void setVisitDate(String visitDate) {
 		this.visitDate = visitDate;
 	}
 
