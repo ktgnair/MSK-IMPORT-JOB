@@ -1,4 +1,4 @@
-package com.krishagni.importcsv.core;
+package com.krishagni.openspecimen.msk2.importer;
 
 public class MskVisitDetail {
 	
@@ -16,11 +16,11 @@ public class MskVisitDetail {
 	
 	private String siteName;
 
-	private String visit;
+	private String studyPhase;
 
 	private String visitComments;
 
-	private String day;
+	private String eventPoint;
 
 	public String getFirstName() {
 		return firstName;
@@ -78,14 +78,6 @@ public class MskVisitDetail {
 		this.siteName = siteName;
 	}
 
-	public String getVisit() {
-		return visit;
-	}
-
-	public void setVisit(String visit) {
-		this.visit = visit;
-	}
-
 	public String getVisitComments() {
 		return visitComments;
 	}
@@ -94,11 +86,19 @@ public class MskVisitDetail {
 		this.visitComments = visitComments;
 	}
 
-	public String getDay() {
-		return day;
+	public String getStudyPhase() {
+		return studyPhase;
 	}
 
-	public void setDay(String day) {
-		this.day = day;
+	public void setStudyPhase(String studyPhase) {
+		this.studyPhase = studyPhase;
+	}
+
+	public String getEventPoint() {
+		return eventPoint;
+	}
+
+	public void setEventPoint(String eventPoint) {
+		this.eventPoint = eventPoint;
 	}
 }

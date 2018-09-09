@@ -1,4 +1,4 @@
-package com.krishagni.importcsv.core;
+package com.krishagni.openspecimen.msk2.importer;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,6 +24,8 @@ import com.krishagni.catissueplus.core.importer.services.ObjectImporter;
 public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisitDetail> {
 	
 	private final static String DATE_FORMAT = "MM/dd/yyyy";
+	
+	SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
 	@Autowired
 	private DaoFactory daoFactory;
@@ -39,7 +41,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 			RequestEvent<ImportObjectDetail<MskVisitDetail>> req) {
 		try {
 			ImportObjectDetail<MskVisitDetail> detail = req.getPayload();
-			importRecords(detail);	
+			importRecord(detail);	
 			return ResponseEvent.response(detail.getObject());
 		} catch (OpenSpecimenException ose) {
 			return ResponseEvent.error(ose);
@@ -49,37 +51,45 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 	}
 	
 	@PlusTransactional
-	private ResponseEvent<Object> importRecords(ImportObjectDetail<MskVisitDetail> detail) throws ParseException {
-		importParticipants(detail.getObject());
+	private ResponseEvent<Object> importRecord(ImportObjectDetail<MskVisitDetail> detail) throws ParseException {
+		importParticipant(detail.getObject());
 		importVisit(detail.getObject());
 		
 		return null;
 	}
 
-	private ResponseEvent<CollectionProtocolRegistrationDetail> importParticipants(MskVisitDetail object) throws ParseException {
+	private ResponseEvent<CollectionProtocolRegistrationDetail> importParticipant(MskVisitDetail object) throws ParseException {
 		CollectionProtocolRegistrationDetail cprDetail = new CollectionProtocolRegistrationDetail();
 		
 		cprDetail.setCpShortTitle(object.getCpShortTitle());
-		cprDetail.setParticipant(new ParticipantDetail());
-		cprDetail.setRegistrationDate(new SimpleDateFormat(DATE_FORMAT).parse(object.getVisitDate()));
+		cprDetail.setParticipant(toParticipant(object));
 		
-		// Adding participant Details
+		cprDetail.setRegistrationDate(dateFormat.parse(object.getVisitDate()));
 		cprDetail.setPpid(object.getPpid());
-		cprDetail.getParticipant().setFirstName(object.getFirstName());
-		cprDetail.getParticipant().setLastName(object.getLastName());
+		
+		ResponseEvent<CollectionProtocolRegistrationDetail> participantResponse = null;
+		if (doesParticipantExists(object.getCpShortTitle(), object.getPpid())) {
+			participantResponse = cprSvc.updateRegistration(request(cprDetail));
+		} else {
+			participantResponse = cprSvc.createRegistration(request(cprDetail));
+		}
+		
+		return participantResponse;
+	}
 	
-		// Setting PMI
-		cprDetail.getParticipant().setPhiAccess(true);
+	private ParticipantDetail toParticipant(MskVisitDetail object) {
+		
+		ParticipantDetail participant = new ParticipantDetail();
+		participant.setFirstName(object.getFirstName());
+		participant.setLastName(object.getLastName());
+		participant.setPhiAccess(true);
+
 		PmiDetail pmi = new PmiDetail();
 		pmi.setMrn(object.getMrn());
 		pmi.setSiteName(object.getSiteName());
-		cprDetail.getParticipant().setPmi(pmi);
-
-		if (checkParticipantExists(object)) {
-			ResponseEvent<CollectionProtocolRegistrationDetail> participantResponse = cprSvc.updateRegistration(request(cprDetail));
-			return participantResponse;
-		} 
-		return(cprSvc.createRegistration(request(cprDetail)));
+		participant.setPmi(pmi);
+		
+		return participant;
 	}
 
 	private ResponseEvent<VisitDetail> importVisit(MskVisitDetail object) throws ParseException {
@@ -88,19 +98,18 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		// Setting Visit
 		visitDetail.setCpShortTitle(object.getCpShortTitle());
 		visitDetail.setPpid(object.getPpid());
-		visitDetail.setEventLabel(object.getVisit() + "#" + object.getDay());
+		visitDetail.setEventLabel(object.getStudyPhase() + "#" + object.getEventPoint());
 		visitDetail.setComments(object.getVisitComments());
-		visitDetail.setVisitDate(new SimpleDateFormat(DATE_FORMAT).parse(object.getVisitDate()));
+		visitDetail.setVisitDate(dateFormat.parse(object.getVisitDate()));
 		
 		ResponseEvent<VisitDetail> visitResponse = visitService.addVisit(request(visitDetail));
 		return(visitResponse);
 	}
 	
-	private boolean checkParticipantExists(MskVisitDetail object) {
-		if (daoFactory.getCprDao().getCprByCpShortTitleAndPpid(object.getCpShortTitle(), object.getPpid())!= null) {
+	private boolean doesParticipantExists(String cpShortTitle, String ppid) {
+		if (daoFactory.getCprDao().getCprByCpShortTitleAndPpid(cpShortTitle, ppid)!= null) {
 			return true;
 		}
-		
 		return false;
 	}
 

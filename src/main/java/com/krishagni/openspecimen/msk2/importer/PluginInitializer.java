@@ -1,4 +1,4 @@
-package com.krishagni.importcsv.core;
+package com.krishagni.openspecimen.msk2.importer;
 
 import org.springframework.beans.factory.InitializingBean;
 
@@ -21,7 +21,7 @@ public class PluginInitializer implements InitializingBean {
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		objectSchemaFactory.registerSchema("com/krishagni/importcsv/core/schema/mskVisit.xml");
-		objectImporterFactory.registerImporter("mskVisit", new MskVisitImporter());
+		objectSchemaFactory.registerSchema("com/krishagni/importcsv/core/schema/msk-visit.xml");
+		objectImporterFactory.registerImporter("msk_visit", new MskVisitImporter());
 	}
 }
