@@ -37,6 +37,7 @@
     </field>
     
     <field>
+      <type>date</type>
       <caption>#getMessage("msk_visit_date")</caption>
       <attribute>visitDate</attribute>
     </field>

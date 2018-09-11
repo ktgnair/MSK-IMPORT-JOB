@@ -1,5 +1,7 @@
 package com.krishagni.openspecimen.msk2.importer;
 
+import java.util.Date;
+
 public class MskVisitDetail {
 	
 	private String firstName;
@@ -12,7 +14,7 @@ public class MskVisitDetail {
 	
 	private String cpShortTitle;
 	
-	private String visitDate;
+	private Date visitDate;
 	
 	private String siteName;
 
@@ -62,11 +64,11 @@ public class MskVisitDetail {
 		this.cpShortTitle = cpShortTitle;
 	}
 
-	public String getVisitDate() {
+	public Date getVisitDate() {
 		return visitDate;
 	}
 
-	public void setVisitDate(String visitDate) {
+	public void setVisitDate(Date visitDate) {
 		this.visitDate = visitDate;
 	}
 
