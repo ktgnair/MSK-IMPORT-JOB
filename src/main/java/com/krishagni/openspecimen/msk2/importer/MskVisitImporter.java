@@ -1,7 +1,5 @@
 package com.krishagni.openspecimen.msk2.importer;
 
-import java.text.ParseException;
-
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
@@ -35,8 +33,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 	private VisitService visitService;
 	
 	@Override
-	public ResponseEvent<MskVisitDetail> importObject(
-			RequestEvent<ImportObjectDetail<MskVisitDetail>> req) {
+	public ResponseEvent<MskVisitDetail> importObject(RequestEvent<ImportObjectDetail<MskVisitDetail>> req) {
 		try {
 			ImportObjectDetail<MskVisitDetail> detail = req.getPayload();
 			importRecord(detail);	
@@ -49,30 +46,30 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 	}
 	
 	@PlusTransactional
-	private ResponseEvent<Object> importRecord(ImportObjectDetail<MskVisitDetail> detail) throws ParseException {
+	private ResponseEvent<Object> importRecord(ImportObjectDetail<MskVisitDetail> detail) throws Exception {
 		importParticipant(detail.getObject());
 		importVisit(detail.getObject());
 		
 		return null;
 	}
 
-	private ResponseEvent<CollectionProtocolRegistrationDetail> importParticipant(MskVisitDetail object) throws ParseException {
+	private ResponseEvent<CollectionProtocolRegistrationDetail> importParticipant(MskVisitDetail object) throws Exception {
 		CollectionProtocolRegistrationDetail cprDetail = new CollectionProtocolRegistrationDetail();
 		
 		cprDetail.setCpShortTitle(object.getCpShortTitle());
-		cprDetail.setParticipant(toParticipant(object));
-		
-		cprDetail.setRegistrationDate(object.getVisitDate());
+		cprDetail.setParticipant(toParticipant(object));		
 		cprDetail.setPpid(object.getPpid());
 		
 		ResponseEvent<CollectionProtocolRegistrationDetail> participantResponse = null;
 		if (doesParticipantExists(object.getCpShortTitle(), object.getPpid())) {
 			participantResponse = cprSvc.updateRegistration(request(cprDetail));
 		} else {
+			cprDetail.setRegistrationDate(object.getVisitDate());
 			participantResponse = cprSvc.createRegistration(request(cprDetail));
 		}
+		participantResponse.throwErrorIfUnsuccessful();
 		
-		return participantResponse;
+		return null;
 	}
 	
 	private ParticipantDetail toParticipant(MskVisitDetail object) {
@@ -90,7 +87,7 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		return participant;
 	}
 
-	private ResponseEvent<VisitDetail> importVisit(MskVisitDetail object) throws ParseException {
+	private ResponseEvent<VisitDetail> importVisit(MskVisitDetail object) throws Exception {
 		VisitDetail visitDetail = new VisitDetail();
 		String eventLabel = object.getStudyPhase() + "#" + object.getEventPoint();
 
@@ -102,37 +99,38 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		visitDetail.setVisitDate(object.getVisitDate());
 		
 		ResponseEvent<VisitDetail> visitResponse = null;
-		
-		if (doesVisitExists(object)) {
-			visitDetail.setId(getVisitByEventLabelAndVisitDate(object).getId());
-			visitDetail.setName(getVisitByEventLabelAndVisitDate(object).getName());
-			visitResponse = visitService.updateVisit(request(visitDetail));
+		visitDetail = getVisitByEventLabelAndVisitDate(object, visitDetail);
+		if (visitDetail != null) {
+			visitResponse = visitService.patchVisit(request(visitDetail));
 		} else {
 			visitResponse = visitService.addVisit(request(visitDetail));
 		}
 		
-		return visitResponse;
+		visitResponse.throwErrorIfUnsuccessful();
+		return null;
 	}
 
 	private boolean doesParticipantExists(String cpShortTitle, String ppid) {
 		return daoFactory.getCprDao().getCprByCpShortTitleAndPpid(cpShortTitle, ppid)!= null ? true : false;
 	}
 	
-	private boolean doesVisitExists(MskVisitDetail object) {
-		return getVisitByEventLabelAndVisitDate(object) != null ? true : false ;
-	}
-	
-	private Visit getVisitByEventLabelAndVisitDate(MskVisitDetail object) {
+	private VisitDetail getVisitByEventLabelAndVisitDate(MskVisitDetail object, VisitDetail visitDetail) {
 		CollectionProtocolRegistration cpr = daoFactory
 				.getCprDao()
 				.getCprByCpShortTitleAndPpid(object.getCpShortTitle(), object.getPpid());
 
 		Visit matchedVisit = cpr.getVisits().stream()
-		.filter(visit -> isVisitOfSameEvent(visit, object))
-		.filter(visit -> DateUtils.isSameDay(visit.getVisitDate(), object.getVisitDate()))
-		.findAny().orElse(null);
+				.filter(visit -> isVisitOfSameEvent(visit, object))
+				.filter(visit -> DateUtils.isSameDay(visit.getVisitDate(), object.getVisitDate()))
+				.findAny().orElse(null);
 		
-		return matchedVisit;
+		if (matchedVisit != null) {
+			visitDetail.setId(matchedVisit.getId());
+			visitDetail.setName(matchedVisit.getName());
+			return visitDetail;
+		}
+		
+		return null;
 	}
 	
 	private boolean isVisitOfSameEvent(Visit visit, MskVisitDetail object) {
