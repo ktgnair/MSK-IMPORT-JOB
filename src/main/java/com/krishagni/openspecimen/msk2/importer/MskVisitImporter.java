@@ -62,6 +62,21 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		
 		ResponseEvent<CollectionProtocolRegistrationDetail> participantResponse = null;
 		if (doesParticipantExists(object.getCpShortTitle(), object.getPpid())) {
+			CollectionProtocolRegistration cprDb = daoFactory
+					.getCprDao()
+					.getCprByCpShortTitleAndPpid(object.getCpShortTitle(), object.getPpid());
+			cprDetail = CollectionProtocolRegistrationDetail.from(cprDb, false);
+			
+			ParticipantDetail existingParticipant = cprDetail.getParticipant();
+			existingParticipant.setFirstName(object.getFirstName());
+			existingParticipant.setLastName(object.getLastName());
+			
+			PmiDetail pmi = new PmiDetail();
+			pmi.setMrn(object.getMrn());
+			pmi.setSiteName(object.getSiteName());
+			existingParticipant.setPmi(pmi);
+			
+			cprDetail.setParticipant(existingParticipant);
 			participantResponse = cprSvc.updateRegistration(request(cprDetail));
 		} else {
 			cprDetail.setRegistrationDate(object.getVisitDate());
@@ -99,14 +114,14 @@ public class MskVisitImporter implements ObjectImporter<MskVisitDetail, MskVisit
 		visitDetail.setVisitDate(object.getVisitDate());
 		
 		ResponseEvent<VisitDetail> visitResponse = null;
-		visitDetail = getVisitByEventLabelAndVisitDate(object, visitDetail);
-		if (visitDetail != null) {
-			visitResponse = visitService.patchVisit(request(visitDetail));
+		VisitDetail existingVisit = getVisitByEventLabelAndVisitDate(object, visitDetail);
+		if (existingVisit != null) {
+			visitResponse = visitService.patchVisit(request(existingVisit));
 		} else {
 			visitResponse = visitService.addVisit(request(visitDetail));
 		}
-		
 		visitResponse.throwErrorIfUnsuccessful();
+		
 		return null;
 	}
 
